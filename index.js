@@ -1,4 +1,4 @@
-let ctx = canvas.getContext('2d')
+const ctx = canvas.getContext('2d')
 let items = JSON.parse(localStorage.getItem('items')) || []
 
 document.onmousedown = function (e) {
@@ -17,24 +17,25 @@ document.onmousedown = function (e) {
 }
 
 function figuresMove(e, elem) {
-    let elem_gbcr = elem.getBoundingClientRect()
-    let x = e.clientX - elem_gbcr.left;
-    let y = e.clientY - elem_gbcr.top;
+    const elem_gbcr = elem.getBoundingClientRect()
+    const x = e.clientX - elem_gbcr.left;
+    const y = e.clientY - elem_gbcr.top;
 
     document.addEventListener('mousemove', mousemove);
+    elem.addEventListener('mouseup', mouseup)
 
     function mousemove(e) {
         elem.style.left = e.pageX - x + 'px';
         elem.style.top = e.pageY - y + 'px';
     }
 
-    elem.onmouseup = function (e) {
-        let canvas_gbcr = canvas.getBoundingClientRect()
+    function mouseup(e) {
+        const canvas_gbcr = canvas.getBoundingClientRect()
         if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
             e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
 
-            let item_x = e.clientX - canvas_gbcr.left;
-            let item_y = e.clientY - canvas_gbcr.top;
+            const item_x = e.clientX - canvas_gbcr.left;
+            const item_y = e.clientY - canvas_gbcr.top;
 
             if (item_x <= 50) item_x = 50;
             if (item_x >= canvas.width - 50) item_x = canvas.width - 50;
@@ -51,12 +52,14 @@ function figuresMove(e, elem) {
                 x: item_x - (x - 51),
                 y: item_y - (y - 31)
             })
+            console.log(items)
             save();
         }
 
         elem.style.top = 'unset';
         elem.style.left = 'unset';
         document.removeEventListener('mousemove', mousemove)
+        elem.removeEventListener('mouseup', mouseup)
     }
 
     elem.ondragstart = function () {
@@ -65,22 +68,21 @@ function figuresMove(e, elem) {
 }
 
 function canvasMove(e) {
-    let canvas_gbcr = canvas.getBoundingClientRect()
+    const canvas_gbcr = canvas.getBoundingClientRect()
     let current
     let remove = false;
     let x;
     let y;
     if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
         e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
-        let xx = e.clientX - canvas_gbcr.left;
-        let yy = e.clientY - canvas_gbcr.top;
+        const item_x = e.clientX - canvas_gbcr.left;
+        const item_y = e.clientY - canvas_gbcr.top;
 
         items.forEach((element, index) => {
-            if (element.x > xx - 50 && element.x < xx + 50 &&
-                element.y > yy - 30 && element.y < yy + 30) {
-                document.addEventListener('mousemove', mousemove)
-                x = element.x - xx;
-                y = element.y - yy;
+            if (element.x > item_x - 50 && element.x < item_x + 50 &&
+                element.y > item_y - 30 && element.y < item_y + 30) {
+                x = element.x - item_x;
+                y = element.y - item_y;
                 current = index;
                 if (e.button == 0) {
                     items = items.map((i) => {
@@ -90,11 +92,18 @@ function canvasMove(e) {
                     element.active = !element.active;
                 }
             }
-        });
+        })
+
+        if (current != undefined) {
+            items.push(items[current])
+            items.splice(current, 1)
+            current = items.length - 1
+            document.addEventListener('mousemove', mousemove)
+        }
     }
 
     function mousemove(e) {
-        let canvas_gbcr = canvas.getBoundingClientRect()
+        const canvas_gbcr = canvas.getBoundingClientRect()
         if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
             e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
             let item_x = e.layerX + x;
@@ -113,13 +122,20 @@ function canvasMove(e) {
         }
     }
 
-    document.onmouseup = function (e) {
+    document.addEventListener('mouseup', mouseup)
+
+    function mouseup(e) {
         if (remove) {
             items.splice(current, 1)
         }
         document.removeEventListener('mousemove', mousemove)
+        document.removeEventListener('mouseup', mouseup)
         save()
     }
+
+    canvas.ondragstart = function () {
+        return false;
+    };
 }
 
 function redraw() {
@@ -165,8 +181,8 @@ document.addEventListener('keydown', function (event) {
 });
 
 button_export.onclick = function () {
-    let data = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items));
-    let download = document.createElement('a')
+    const data = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items));
+    const download = document.createElement('a')
     download.setAttribute("target", "_blank")
     download.setAttribute("id", "a_download")
     download.setAttribute("download", "items.json")
@@ -181,13 +197,13 @@ button_import.onclick = function () {
 }
 
 input_import.onchange = () => {
-    let file = input_import.files[0]
+    const file = input_import.files[0]
     if (file.type !== "application/json") {
         alert('The file is not correct')
         return
     }
 
-    let reader = new FileReader();
+    const reader = new FileReader();
     reader.readAsText(file, "utf-8");
     reader.onload = () => (items = JSON.parse(reader.result));
 }
