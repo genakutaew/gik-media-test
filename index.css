@@ -1,4 +1,35 @@
-body{
+body {
     margin: 0;
+    padding: 20px;
+}
+
+.button-group {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+table {
+    margin: auto;
+}
+
+th {
+    background-color: lightgray;
+}
+
+table,
+th,
+td {
+    border: 1px solid black;
+    border-collapse: collapse;
     padding: 0;
+}
+
+#canvas-items {
+    width: 300px;
+    height: 700px;
+}
+
+#canvas-content {
+    width: 700px;
+    height: 700px;
 }

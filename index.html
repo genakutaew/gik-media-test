@@ -5,10 +5,27 @@
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <title>Gik Media Test</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='index.css'>    
+    <link rel='stylesheet' type='text/css' media='screen' href='index.css'>
 </head>
 <body>
-   
+    <div class="button-group">
+        <button class="button" id="import">Import</button>
+        <button class="button" id="export">Export</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Figures</th>
+                <th>Canvas</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><canvas id="canvas-items"></canvas></td>
+                <td><canvas id="canvas-content"></canvas></td>
+            </tr>
+        </tbody>
+    </table>
     <script src='index.js'></script>
 </body>
 </html>
