@@ -9,8 +9,9 @@
 </head>
 <body>
     <div class="button-group">
-        <button class="button" id="import">Import</button>
-        <button class="button" id="export">Export</button>
+        <button class="button" id="button_import">Import</button>
+        <input id="input_import" type="file">
+        <button class="button" id="button_export">Export</button>
     </div>
     <table>
         <thead>
@@ -21,11 +22,25 @@
         </thead>
         <tbody>
             <tr>
-                <td><canvas id="canvas-items"></canvas></td>
-                <td><canvas id="canvas-content"></canvas></td>
+                <td>
+                    <div class="figures">
+                        <div>
+                            <div class="ellipse" id="ellipse"
+                                style="position: absolute"></div>
+                            <div class="ellipse"></div>                            
+                        </div>
+                        <div>
+                            <div class="rect" id="rect"
+                            style="position: absolute;"></div>
+                            <div class="rect"></div>
+                        </div>
+                    </div>
+                </td>
+                <td><canvas width="700" height="700" id="canvas"></canvas></td>
             </tr>
         </tbody>
     </table>
+    <div id="devblock" style="top: 0; left: 0;position: absolute;"></div>
     <script src='index.js'></script>
 </body>
 </html>

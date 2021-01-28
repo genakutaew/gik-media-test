@@ -24,12 +24,33 @@ td {
     padding: 0;
 }
 
-#canvas-items {
+.figures {
     width: 300px;
     height: 700px;
 }
 
-#canvas-content {
-    width: 700px;
-    height: 700px;
+.figures>div {
+    margin: 20px auto;
+    width: 100px;
+}
+
+.ellipse {
+    cursor: pointer;
+    width: 100px;
+    height: 60px;
+    background-color: blue;
+    border-radius: 100%;
+    border: 1px solid black;
+}
+
+.rect {
+    cursor: pointer;
+    width: 100px;
+    height: 60px;
+    background-color: green;
+    border: 1px solid black;
+}
+
+input {
+    display: none;
 }
