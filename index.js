@@ -1,4 +1,6 @@
 const ctx = canvas.getContext('2d')
+const ellipse = document.getElementById('figure_ellipse')
+const rect = document.getElementById('figure_rect')
 //массив с элементами
 let items = JSON.parse(localStorage.getItem('items')) || []
 
@@ -36,33 +38,9 @@ function figuresMove(e, elem) {
     }
 
     //при отжатии клавиши мыши добавляем элемент в массив элементов учитывая коллизию
-    //и сохраняем массив элементов в localstorage в виде JSON
+    //и сохраняем массив элементов в localstorage
     function mouseup(e) {
-        const canvas_gbcr = canvas.getBoundingClientRect()
-        if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
-            e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
-
-            const item_x = e.clientX - canvas_gbcr.left
-            const item_y = e.clientY - canvas_gbcr.top
-
-            if (item_x <= 50) item_x = 50
-            if (item_x >= canvas.width - 50) item_x = canvas.width - 50
-            if (item_y <= 30) item_y = 30
-            if (item_y >= canvas.height - 30) item_y = canvas.height - 30
-
-            items = items.map((i) => {
-                i.active = false
-                return i
-            })
-            items.push({
-                active: true,
-                type: elem.id,
-                x: item_x - (x - 51),
-                y: item_y - (y - 31)
-            })
-            save()
-        }
-
+        mouseup_add(e, elem.id, x, y, 0)
         //возвращаем фигуру на исходное место и удаляем ненужные обработчики
         elem.style.top = 'unset'
         elem.style.left = 'unset'
@@ -75,11 +53,51 @@ function figuresMove(e, elem) {
     }
 }
 
+//вынесенная функция для добавления элемента на канвас, т.к. используется в двух местах
+//переменная status показывает откуда был сдела вызов, и в зависимости от этого по разному вычисляются координаты
+function mouseup_add(e, type, x, y, status) {
+    const canvas_gbcr = canvas.getBoundingClientRect()
+    if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
+        e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
+
+        let item_x
+        let item_y
+
+        if (status === 0) {
+            item_x = e.clientX - canvas_gbcr.left - (x - 50)
+            item_y = e.clientY - canvas_gbcr.top - (y - 30)
+        }
+
+        if (status === 1) {
+            item_x = e.clientX - canvas_gbcr.left + x
+            item_y = e.clientY - canvas_gbcr.top + y
+        }
+
+        if (item_x <= 50) item_x = 50
+        if (item_x >= canvas.width - 50) item_x = canvas.width - 50
+        if (item_y <= 30) item_y = 30
+        if (item_y >= canvas.height - 30) item_y = canvas.height - 30
+
+        items = items.map((i) => {
+            i.active = false
+            return i
+        })
+
+        items.push({
+            active: true,
+            type: type.replace('figure_', ''),
+            x: item_x,
+            y: item_y
+        })
+        save()
+    }
+}
+
 //функция для перемещения (учитывая коллизию), и удаления элементов на канвасе 
 function canvasMove(e) {
     const canvas_gbcr = canvas.getBoundingClientRect()
     let current
-    let remove = false
+    let type
     let x
     let y
     if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
@@ -96,7 +114,8 @@ function canvasMove(e) {
                 x = element.x - item_x
                 y = element.y - item_y
                 current = index
-                if (e.button == 0) {
+                type = element.type
+                if (e.button === 0) {
                     items = items.map((i) => {
                         i.active = false
                         return i
@@ -118,8 +137,7 @@ function canvasMove(e) {
     }
 
     //функция для перемещения элемента на канвасе
-    //если курсор находиться за пределами канваса, то удаляем элемент при отжатии кнопки мыши
-    //иначе просто перемещаем
+    //если курсор находиться за пределами канваса, то удаляем элемент и показываем фигуру под курсором    
     function mousemove(e) {
         const canvas_gbcr = canvas.getBoundingClientRect()
         if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
@@ -132,19 +150,42 @@ function canvasMove(e) {
             if (item_y <= 30) item_y = 30
             if (item_y >= canvas.height - 30) item_y = canvas.height - 30
 
-            items[current].x = item_x
-            items[current].y = item_y
-            remove = false
+            if (current != undefined) {
+                items[current].x = item_x
+                items[current].y = item_y
+            }
         } else {
-            remove = true
+            //если мы за пределами канваса то удаляем элемент с канваса
+            //и устанавливаем current в undefined
+            if (current != undefined) {
+                items.splice(current, 1)
+                current = undefined
+            }
         }
+
+        //если элемент удален с канваса, то перемещаем фигуру
+        if (current === undefined)
+            switch (type) {
+                case 'ellipse':
+                    ellipse.style.top = e.pageY + y - 30 + 'px'
+                    ellipse.style.left = e.pageX + x - 50 + 'px'
+                    break
+                case 'rect':
+                    rect.style.top = e.pageY + y - 30 + 'px'
+                    rect.style.left = e.pageX + x - 50 + 'px'
+                    break
+            }
     }
 
-    //при отжатии кнопки мыши удаляем обработчки, удаляем элемент (если надо)
-    //и сохраняем массив элементов в localstorage в виде JSON
+    //если при отжатии кнопки мыши current равна undefined то это значит что нам нужно добавить новый элемент на канвас
+    //иначе просто удаляем обработчики событий    
+    //и сохраняем массив элементов в localstorage
     function mouseup(e) {
-        if (remove) {
-            items.splice(current, 1)
+        if (current === undefined) {
+            mouseup_add(e, type, x, y, 1)
+            //возвращаем фигуру на исходное место и удаляем ненужные обработчики
+            document.getElementById('figure_' + type).style.top = 'unset'
+            document.getElementById('figure_' + type).style.left = 'unset'
         }
         document.removeEventListener('mousemove', mousemove)
         document.removeEventListener('mouseup', mouseup)
@@ -186,19 +227,23 @@ function redraw() {
 }
 
 //выполняем перерисовку 60 раз в секунду
-setInterval(() => {
-    redraw()
-}, 16)
+setInterval(redraw, 16)
 
-//функция для сохраниения масисва элементов в localstorage
+//функция для сохраниения масисва элементов в localstorage в виде JSON
 function save() {
     localStorage.setItem('items', JSON.stringify(items))
+}
+
+//функция для очистки канваса
+button_clear.onclick = function () {
+    items = []
+    save()
 }
 
 //функция для отслеживания нажатия клавиши delete|
 //и удаления активного элемента
 document.addEventListener('keydown', function (event) {
-    if (event.code == 'Delete') {
+    if (event.code === 'Delete') {
         items = items.filter(i => !i.active)
     }
     save()
