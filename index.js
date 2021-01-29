@@ -1,46 +1,54 @@
 const ctx = canvas.getContext('2d')
+//массив с элементами
 let items = JSON.parse(localStorage.getItem('items')) || []
 
+//функция для отслеживания нажатия на документ
 document.onmousedown = function (e) {
+    //нахождение элемента под координатами клика
     let element = document.elementFromPoint(e.clientX, e.clientY)
+    //в зависимости от элемента выполняем определенную функцию
     switch (element) {
         case ellipse:
             figuresMove(e, ellipse)
-            break;
+            break
         case rect:
             figuresMove(e, rect)
-            break;
+            break
         case canvas:
             canvasMove(e)
-            break;
+            break
     }
 }
 
+//функция для добавления новой фигуры на холст
 function figuresMove(e, elem) {
     const elem_gbcr = elem.getBoundingClientRect()
-    const x = e.clientX - elem_gbcr.left;
-    const y = e.clientY - elem_gbcr.top;
+    const x = e.clientX - elem_gbcr.left
+    const y = e.clientY - elem_gbcr.top
 
-    document.addEventListener('mousemove', mousemove);
+    document.addEventListener('mousemove', mousemove)
     elem.addEventListener('mouseup', mouseup)
 
+    //перемещение фигуры
     function mousemove(e) {
-        elem.style.left = e.pageX - x + 'px';
-        elem.style.top = e.pageY - y + 'px';
+        elem.style.left = e.pageX - x + 'px'
+        elem.style.top = e.pageY - y + 'px'
     }
 
+    //при отжатии клавиши мыши добавляем элемент в массив элементов учитывая коллизию
+    //и сохраняем массив элементов в localstorage в виде JSON
     function mouseup(e) {
         const canvas_gbcr = canvas.getBoundingClientRect()
         if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
             e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
 
-            const item_x = e.clientX - canvas_gbcr.left;
-            const item_y = e.clientY - canvas_gbcr.top;
+            const item_x = e.clientX - canvas_gbcr.left
+            const item_y = e.clientY - canvas_gbcr.top
 
-            if (item_x <= 50) item_x = 50;
-            if (item_x >= canvas.width - 50) item_x = canvas.width - 50;
-            if (item_y <= 30) item_y = 30;
-            if (item_y >= canvas.height - 30) item_y = canvas.height - 30;
+            if (item_x <= 50) item_x = 50
+            if (item_x >= canvas.width - 50) item_x = canvas.width - 50
+            if (item_y <= 30) item_y = 30
+            if (item_y >= canvas.height - 30) item_y = canvas.height - 30
 
             items = items.map((i) => {
                 i.active = false
@@ -52,78 +60,88 @@ function figuresMove(e, elem) {
                 x: item_x - (x - 51),
                 y: item_y - (y - 31)
             })
-            console.log(items)
-            save();
+            save()
         }
 
-        elem.style.top = 'unset';
-        elem.style.left = 'unset';
+        //возвращаем фигуру на исходное место и удаляем ненужные обработчики
+        elem.style.top = 'unset'
+        elem.style.left = 'unset'
         document.removeEventListener('mousemove', mousemove)
         elem.removeEventListener('mouseup', mouseup)
     }
-
+    //отключаем "родной" drag and drop
     elem.ondragstart = function () {
-        return false;
-    };
+        return false
+    }
 }
 
+//функция для перемещения (учитывая коллизию), и удаления элементов на канвасе 
 function canvasMove(e) {
     const canvas_gbcr = canvas.getBoundingClientRect()
     let current
-    let remove = false;
-    let x;
-    let y;
+    let remove = false
+    let x
+    let y
     if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
         e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
-        const item_x = e.clientX - canvas_gbcr.left;
-        const item_y = e.clientY - canvas_gbcr.top;
+        const item_x = e.clientX - canvas_gbcr.left
+        const item_y = e.clientY - canvas_gbcr.top
 
+        //проверяем массив элементов и возвращаем все которые находятся под курсором мыши
+        //т.к. мы не выходим из цикла при первом найденном элементе то выбранным будет последний элемент
+        //сохраняем его координаты и индекс
         items.forEach((element, index) => {
             if (element.x > item_x - 50 && element.x < item_x + 50 &&
                 element.y > item_y - 30 && element.y < item_y + 30) {
-                x = element.x - item_x;
-                y = element.y - item_y;
-                current = index;
+                x = element.x - item_x
+                y = element.y - item_y
+                current = index
                 if (e.button == 0) {
                     items = items.map((i) => {
                         i.active = false
                         return i
                     })
-                    element.active = !element.active;
+                    element.active = !element.active
                 }
             }
         })
 
+        //если элемент был найден, то перемещаем его в конец (таким образом он будет выше всех остальных, т.к. отрисовка идет с начала массива до конца)
+        //и так же добавляем обработчики перемещения и отжатия клавишы мыши
         if (current != undefined) {
             items.push(items[current])
             items.splice(current, 1)
             current = items.length - 1
             document.addEventListener('mousemove', mousemove)
+            document.addEventListener('mouseup', mouseup)
         }
     }
 
+    //функция для перемещения элемента на канвасе
+    //если курсор находиться за пределами канваса, то удаляем элемент при отжатии кнопки мыши
+    //иначе просто перемещаем
     function mousemove(e) {
         const canvas_gbcr = canvas.getBoundingClientRect()
         if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
             e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
-            let item_x = e.layerX + x;
-            let item_y = e.layerY + y;
+            let item_x = e.layerX + x
+            let item_y = e.layerY + y
 
-            if (item_x <= 50) item_x = 50;
-            if (item_x >= canvas.width - 50) item_x = canvas.width - 50;
-            if (item_y <= 30) item_y = 30;
-            if (item_y >= canvas.height - 30) item_y = canvas.height - 30;
+            if (item_x <= 50) item_x = 50
+            if (item_x >= canvas.width - 50) item_x = canvas.width - 50
+            if (item_y <= 30) item_y = 30
+            if (item_y >= canvas.height - 30) item_y = canvas.height - 30
 
-            items[current].x = item_x;
-            items[current].y = item_y;
-            remove = false;
+            items[current].x = item_x
+            items[current].y = item_y
+            remove = false
         } else {
-            remove = true;
+            remove = true
         }
     }
 
-    document.addEventListener('mouseup', mouseup)
-
+    //при отжатии кнопки мыши удаляем обработчки, удаляем элемент (если надо)
+    //и сохраняем массив элементов в localstorage в виде JSON
     function mouseup(e) {
         if (remove) {
             items.splice(current, 1)
@@ -133,77 +151,86 @@ function canvasMove(e) {
         save()
     }
 
+    //отключаем "родной" drag and drop
     canvas.ondragstart = function () {
-        return false;
-    };
+        return false
+    }
 }
 
+//функция перерисовки объектов на канвасе
+//данные берутся с массива элементов
 function redraw() {
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
     items.forEach(element => {
         switch (element.type) {
             case 'ellipse':
-                ctx.fillStyle = 'blue';
-                ctx.beginPath();
-                ctx.ellipse(element.x, element.y, 50, 30, 0, 0, 360);
-
-                break;
+                ctx.fillStyle = 'blue'
+                ctx.beginPath()
+                ctx.ellipse(element.x, element.y, 50, 30, 0, 0, 360)
+                break
             case 'rect':
-                ctx.fillStyle = 'green';
-                ctx.beginPath();
-                ctx.rect(element.x - 50, element.y - 30, 100, 60);
-                break;
+                ctx.fillStyle = 'green'
+                ctx.beginPath()
+                ctx.rect(element.x - 50, element.y - 30, 100, 60)
+                break
         }
-        ctx.fill();
+        ctx.fill()
         if (element.active)
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 3
         else
-            ctx.lineWidth = 1;
-        ctx.strokeStyle = "black";
-        ctx.stroke();
-    });
+            ctx.lineWidth = 1
+        ctx.strokeStyle = "black"
+        ctx.stroke()
+    })
 }
 
+//выполняем перерисовку 60 раз в секунду
 setInterval(() => {
     redraw()
-}, 10)
+}, 16)
 
+//функция для сохраниения масисва элементов в localstorage
 function save() {
-    localStorage.setItem('items', JSON.stringify(items));
+    localStorage.setItem('items', JSON.stringify(items))
 }
 
+//функция для отслеживания нажатия клавиши delete|
+//и удаления активного элемента
 document.addEventListener('keydown', function (event) {
     if (event.code == 'Delete') {
         items = items.filter(i => !i.active)
     }
     save()
-});
+})
 
+//обработчик нажатия кнопки export
+//экспортирует массив элементов в файл
 button_export.onclick = function () {
-    const data = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items));
+    const data = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items))
     const download = document.createElement('a')
     download.setAttribute("target", "_blank")
     download.setAttribute("id", "a_download")
     download.setAttribute("download", "items.json")
-    download.setAttribute("href", data);
-    document.body.append(download);
-    download.click();
+    download.setAttribute("href", data)
+    document.body.append(download)
+    download.click()
     a_download.remove()
 }
 
+//обработчик нажатия кнопки import
 button_import.onclick = function () {
     input_import.click()
 }
 
+//функция для импорта массивы элементов с файла
 input_import.onchange = () => {
     const file = input_import.files[0]
     if (file.type !== "application/json") {
         alert('The file is not correct')
         return
     }
-
-    const reader = new FileReader();
-    reader.readAsText(file, "utf-8");
-    reader.onload = () => (items = JSON.parse(reader.result));
+    const reader = new FileReader()
+    reader.readAsText(file, "utf-8")
+    reader.onload = () => (items = JSON.parse(reader.result))
 }
