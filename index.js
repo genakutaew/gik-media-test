@@ -1,7 +1,12 @@
+const canvas = document.getElementById('canvas_2d')
 const ctx = canvas.getContext('2d')
 const ellipse = document.getElementById('figure_ellipse')
 const rect = document.getElementById('figure_rect')
-//массив с элементами
+const button_import = document.getElementById('import')
+const button_export = document.getElementById('export')
+const button_clear = document.getElementById('clear')
+const input_import = document.getElementById('input')
+//массив с элементами.
 let items = JSON.parse(localStorage.getItem('items')) || []
 
 //функция для отслеживания нажатия на документ
@@ -142,8 +147,8 @@ function canvasMove(e) {
         const canvas_gbcr = canvas.getBoundingClientRect()
         if (e.clientY >= canvas_gbcr.top && e.clientY <= canvas_gbcr.top + canvas.height &&
             e.clientX >= canvas_gbcr.left && e.clientX <= canvas_gbcr.left + canvas.width) {
-            let item_x = e.layerX + x
-            let item_y = e.layerY + y
+            let item_x = e.offsetX + x
+            let item_y = e.offsetY + y
 
             if (item_x <= 50) item_x = 50
             if (item_x >= canvas.width - 50) item_x = canvas.width - 50
